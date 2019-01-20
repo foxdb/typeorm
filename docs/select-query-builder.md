@@ -27,7 +27,7 @@
 
 ## What is `QueryBuilder`
 
-`QueryBuilder` is one of the most powerful features of TypeORM - 
+`QueryBuilder` is one of the most powerful features of TypeORM -
 it allows you to build SQL queries using elegant and convenient syntax,
 execute them and get automatically transformed entities.
 
@@ -41,12 +41,12 @@ const firstUser = await connection
     .getOne();
 ```
 
-It builds the following SQL query: 
+It builds the following SQL query:
 
 ```sql
-SELECT 
-    user.id as userId, 
-    user.firstName as userFirstName, 
+SELECT
+    user.id as userId,
+    user.firstName as userFirstName,
     user.lastName as userLastName
 FROM users user
 WHERE user.id = 1
@@ -60,17 +60,17 @@ User {
     firstName: "Timber",
     lastName: "Saw"
 }
-``` 
+```
 
 ## How to create and use a `QueryBuilder`
 
 There are several ways how you can create a `Query Builder`:
 
 * Using connection:
-    
+
     ```typescript
     import {getConnection} from "typeorm";
-    
+
     const user = await getConnection()
         .createQueryBuilder()
         .select("user")
@@ -80,10 +80,10 @@ There are several ways how you can create a `Query Builder`:
     ```
 
 * Using entity manager:
-    
+
     ```typescript
     import {getManager} from "typeorm";
-    
+
     const user = await getManager()
         .createQueryBuilder(User, "user")
         .where("user.id = :id", { id: 1 })
@@ -91,10 +91,10 @@ There are several ways how you can create a `Query Builder`:
     ```
 
 * Using repository:
-    
+
     ```typescript
     import {getRepository} from "typeorm";
-    
+
     const user = await getRepository(User)
         .createQueryBuilder("user")
         .where("user.id = :id", { id: 1 })
@@ -107,7 +107,7 @@ There are 5 different `QueryBuilder` types available:
 
     ```typescript
     import {getConnection} from "typeorm";
-    
+
     const user = await getConnection()
         .createQueryBuilder()
         .select("user")
@@ -120,23 +120,23 @@ There are 5 different `QueryBuilder` types available:
 
     ```typescript
     import {getConnection} from "typeorm";
-    
+
     await getConnection()
         .createQueryBuilder()
         .insert()
         .into(User)
         .values([
-            { firstName: "Timber", lastName: "Saw" }, 
+            { firstName: "Timber", lastName: "Saw" },
             { firstName: "Phantom", lastName: "Lancer" }
          ])
         .execute();
     ```
 
 * `UpdateQueryBuilder` - used to build and execute `UPDATE` queries. Example:
-                          
+
     ```typescript
     import {getConnection} from "typeorm";
-    
+
     await getConnection()
         .createQueryBuilder()
         .update(User)
@@ -145,10 +145,10 @@ There are 5 different `QueryBuilder` types available:
         .execute();
     ```
 * `DeleteQueryBuilder` - used to build and execute `DELETE` queries. Example:
-                                                    
+
     ```typescript
     import {getConnection} from "typeorm";
-    
+
     await getConnection()
         .createQueryBuilder()
         .delete()
@@ -157,14 +157,14 @@ There are 5 different `QueryBuilder` types available:
         .execute();
     ```
 
-* `RelationQueryBuilder` - used to build and execute relation-specific operations [TBD]. 
+* `RelationQueryBuilder` - used to build and execute relation-specific operations [TBD].
 
 You can switch between different types of query builder within any of them,
 once you do, you will get a new instance of query builder (unlike all other methods).
 
 ## Getting values using `QueryBuilder`
 
-To get a single result from the database, 
+To get a single result from the database,
 for example to get a user by id or name, you must use `getOne`:
 
 ```typescript
@@ -172,9 +172,9 @@ const timber = await getRepository(User)
     .createQueryBuilder("user")
     .where("user.id = :id OR user.name = :name", { id: 1, name: "Timber" })
     .getOne();
-``` 
+```
 
-To get multiple results from the database, 
+To get multiple results from the database,
 for example, to get all users from the database, use `getMany`:
 
 ```typescript
@@ -184,9 +184,9 @@ const users = await getRepository(User)
 ```
 
 There are two types of results you can get using select query builder: **entities** or **raw results**.
-Most of the time, you need to select real entities from your database, for example, users. 
+Most of the time, you need to select real entities from your database, for example, users.
 For this purpose, you use `getOne` and `getMany`.
-But sometimes you need to select some specific data, let's say the *sum of all user photos*. 
+But sometimes you need to select some specific data, let's say the *sum of all user photos*.
 This data is not an entity, it's called raw data.
 To get raw data, you use `getRawOne` and `getRawMany`.
 Examples:
@@ -213,7 +213,7 @@ const photosSums = await getRepository(User)
 ## What are aliases for?
 
 We used `createQueryBuilder("user")`. But what is "user"?
-It's just a regular SQL alias. 
+It's just a regular SQL alias.
 We use aliases everywhere, except when we work with selected data.
 
 `createQueryBuilder("user")` is equivalent to:
@@ -250,15 +250,15 @@ See, we used the users table by using the `user` alias we assigned when we creat
 
 One query builder is not limited to one alias, they can have multiple aliases.
 Each select can have its own alias,
-you can select from multiple tables each with its own alias, 
+you can select from multiple tables each with its own alias,
 you can join multiple tables each with its own alias.
-You can use those aliases to access tables are you selecting (or data you are selecting). 
+You can use those aliases to access tables are you selecting (or data you are selecting).
 
 ## Using parameters to escape data
 
 We used `where("user.name = :name", { name: "Timber" })`.
 What does `{ name: "Timber" }` stand for? It's a parameter we used to prevent SQL injection.
-We could have written: `where("user.name = '" + name + "')`, 
+We could have written: `where("user.name = '" + name + "')`,
 however this is not safe, as it opens the code to SQL injections.
 The safe way is to use this special syntax: `where("user.name = :name", { name: "Timber" })`,
 where `:name` is a parameter name and the value is specified in an object: `{ name: "Timber" }`.
@@ -272,6 +272,19 @@ is a shortcut for:
 ```typescript
 .where("user.name = :name")
 .setParameter("name", "Timber")
+```
+
+Note: a set of parameters is unique per-query. A parameter's value will be overriden if you set it multiple times:
+
+```typescript
+.where("user.name = :myParameter", { myParameter: "Timber" })
+.andWhere("user.lastName = :myParameter", { myParameter: "Saw" });
+```
+
+will result in following query:
+
+```sql
+SELECT ... FROM users user WHERE user.name = 'Saw' AND user.lastName = 'Saw'
 ```
 
 ## Adding `WHERE` expression
@@ -338,8 +351,8 @@ You can combine as many `AND` and `OR` expressions as you need.
 If you use `.where` more than once you'll override all previous `WHERE` expressions.
 
 Note: be careful with `orWhere` - if you use complex expressions with both `AND` and `OR` expressions,
-keep in mind that they are stacked without any pretences. 
-Sometimes you'll need to create a where string instead, and avoid using `orWhere`. 
+keep in mind that they are stacked without any pretences.
+Sometimes you'll need to create a where string instead, and avoid using `orWhere`.
 
 ## Adding `HAVING` expression
 
@@ -407,7 +420,7 @@ You can change the ordering direction from ascending to descending (or versa):
 ```typescript
 createQueryBuilder("user")
     .orderBy("user.id", "DESC")
-    
+
 createQueryBuilder("user")
     .orderBy("user.id", "ASC")
 ```
@@ -504,13 +517,13 @@ import {Photo} from "./Photo";
 
 @Entity()
 export class User {
-    
+
     @PrimaryGeneratedColumn()
     id: number;
-    
+
     @Column()
     name: string;
-    
+
     @OneToMany(type => Photo, photo => photo.user)
     photos: Photo[];
 }
@@ -522,13 +535,13 @@ import {User} from "./User";
 
 @Entity()
 export class Photo {
-    
+
     @PrimaryGeneratedColumn()
     id: number;
-    
+
     @Column()
     url: string;
-    
+
     @ManyToOne(type => User, user => user.photos)
     user: User;
 }
@@ -575,7 +588,7 @@ const user = await createQueryBuilder("user")
 This will generate following sql query:
 
 ```sql
-SELECT user.*, photo.* FROM users user 
+SELECT user.*, photo.* FROM users user
     LEFT JOIN photos photo ON photo.user = user.id
     WHERE user.name = 'Timber' AND photo.isRemoved = FALSE
 ```
@@ -592,7 +605,7 @@ const user = await createQueryBuilder("user")
 This will generate the following sql query:
 
 ```sql
-SELECT user.*, photo.* FROM users user 
+SELECT user.*, photo.* FROM users user
     LEFT JOIN photos photo ON photo.user = user.id AND photo.isRemoved = FALSE
     WHERE user.name = 'Timber'
 ```
@@ -611,7 +624,7 @@ const user = await createQueryBuilder("user")
 This will generate:
 
 ```sql
-SELECT user.*, photo.* FROM users user 
+SELECT user.*, photo.* FROM users user
     INNER JOIN photos photo ON photo.user = user.id AND photo.isRemoved = FALSE
     WHERE user.name = 'Timber'
 ```
@@ -635,12 +648,12 @@ const user = await createQueryBuilder("user")
 This will generate:
 
 ```sql
-SELECT user.* FROM users user 
+SELECT user.* FROM users user
     INNER JOIN photos photo ON photo.user = user.id
     WHERE user.name = 'Timber'
 ```
 
-This will select Timber if he has photos, but won't return his photos. 
+This will select Timber if he has photos, but won't return his photos.
 
 ## Joining any entity or table
 
@@ -664,10 +677,10 @@ const user = await createQueryBuilder("user")
 Add `profilePhoto` to `User` entity and you can map any data into that property using `QueryBuilder`:
 
 ```typescript
-export class User {    
+export class User {
     /// ...
     profilePhoto: Photo;
-    
+
 }
 ```
 
@@ -709,9 +722,9 @@ This query will return users and print the used sql statement to the console.
 ## Getting raw results
 
 There are two types of results you can get using select query builder: **entities** and **raw results**.
-Most of the time, you need to select real entities from your database, for example, users. 
+Most of the time, you need to select real entities from your database, for example, users.
 For this purpose, you use `getOne` and `getMany`.
-However, sometimes you need to select specific data, like the *sum of all user photos*. 
+However, sometimes you need to select specific data, like the *sum of all user photos*.
 Such data is not a entity, it's called raw data.
 To get raw data, you use `getRawOne` and `getRawMany`.
 Examples:
@@ -941,10 +954,10 @@ import {Entity, PrimaryGeneratedColumn, Column} from "typeorm";
 
 @Entity()
 export class User {
-    
+
     @PrimaryGeneratedColumn()
     id: number;
-    
+
     @Column()
     name: string;
 
